@@ -4,21 +4,28 @@ import { useEffect, useState } from "react";
 import ProductForm from "@/components/ProductForm";
 import ProductCard from "@/components/ProductCard";
 import Toast from "@/components/Toast";
+import { Product } from "@/types";
 
 export default function Home() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
   const fetchProducts = async () => {
     const res = await fetch("/api/products");
-    const data = await res.json();
+    const data: Product[] = await res.json();
     setProducts(data);
   };
 
   useEffect(() => {
-    fetchProducts();
+    // perform fetch within effect body to avoid direct setState warning
+    async function load() {
+      const res = await fetch("/api/products");
+      const data: Product[] = await res.json();
+      setProducts(data);
+    }
+    load();
   }, []);
 
   const showSuccessToast = (message: string) => {
@@ -58,8 +65,8 @@ export default function Home() {
           <div className="lg:col-span-1">
             <ProductForm
               editingProduct={editingProduct}
-              clearEdit={() => setEditingProduct(null)}
-              onProductSaved={() => {
+              clearEditAction={() => setEditingProduct(null)}
+              onProductSavedAction={() => {
                 fetchProducts();
                 showSuccessToast(
                   editingProduct
@@ -81,8 +88,8 @@ export default function Home() {
                 <ProductCard
                   key={product._id}
                   product={product}
-                  onDelete={deleteProduct}
-                  onEdit={(product) => setEditingProduct(product)}
+                  onDeleteAction={deleteProduct}
+                  onEditAction={(p) => setEditingProduct(p)}
                 />
               ))}
             </div>

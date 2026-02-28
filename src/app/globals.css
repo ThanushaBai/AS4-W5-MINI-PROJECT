@@ -10,7 +10,7 @@
   --soft-red: #fee2e2;       /* light red background */
 }
 
-@theme inline {
+/* @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
@@ -19,7 +19,7 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+} */
 
 body {
   background: var(--background);

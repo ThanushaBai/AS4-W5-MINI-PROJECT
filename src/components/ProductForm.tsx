@@ -1,46 +1,50 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import { Product } from "@/types";
 
 interface Props {
-  onProductSaved: () => void;
-  editingProduct: any;
-  clearEdit: () => void;
+  onProductSavedAction: () => void;
+  editingProduct: Product | null;
+  clearEditAction: () => void;
 }
 
 export default function ProductForm({
-  onProductSaved,
+  onProductSavedAction,
   editingProduct,
-  clearEdit,
+  clearEditAction,
 }: Props) {
-  const [form, setForm] = useState({
+  type FormState = {
+    name: string;
+    price: string;
+    description: string;
+    image: string;
+  };
+
+  const [form, setForm] = useState<FormState>({
     name: "",
     price: "",
     description: "",
     image: "",
   });
 
-  // ✅ Safe editing fill
+  // update form when editing product changes
   useEffect(() => {
-    if (editingProduct) {
+    // defer state update to next tick to avoid React warning about
+    // synchronous setState inside effect
+    const t = setTimeout(() => {
       setForm({
-        name: editingProduct.name ?? "",
-        price: editingProduct.price?.toString() ?? "",
-        description: editingProduct.description ?? "",
-        image: editingProduct.image ?? "",
+        name: editingProduct?.name ?? "",
+        price: editingProduct?.price?.toString() ?? "",
+        description: editingProduct?.description ?? "",
+        image: editingProduct?.image ?? "",
       });
-    } else {
-      // clear form if edit cancelled
-      setForm({
-        name: "",
-        price: "",
-        description: "",
-        image: "",
-      });
-    }
+    }, 0);
+    return () => clearTimeout(t);
   }, [editingProduct]);
 
-  const handleImageUpload = (e: any) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -55,7 +59,7 @@ export default function ProductForm({
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const payload = {
@@ -84,8 +88,8 @@ export default function ProductForm({
       image: "",
     });
 
-    clearEdit();
-    onProductSaved();
+    clearEditAction();
+    onProductSavedAction();
   };
 
   return (
@@ -101,7 +105,7 @@ export default function ProductForm({
         {editingProduct && (
           <button
             type="button"
-            onClick={clearEdit}
+            onClick={clearEditAction}
             className="text-sm text-slate-500 hover:text-slate-800"
           >
             Cancel
@@ -172,10 +176,12 @@ export default function ProductForm({
 
       {/* Preview */}
       {form.image && (
-        <img
+        <Image
           src={form.image}
+          alt="Product Preview"
+          width={112}
+          height={112}
           className="h-28 object-cover rounded-lg border border-slate-200"
-          alt="Preview"
         />
       )}
 
