@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ProductForm from "@/components/ProductForm";
 import ProductCard from "@/components/ProductCard";
 import Toast from "@/components/Toast";
 import { Product } from "@/types";
 
 export default function Home() {
+  const router = useRouter();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   const fetchProducts = async () => {
     const res = await fetch("/api/products");
@@ -18,15 +22,23 @@ export default function Home() {
     setProducts(data);
   };
 
+  // 🔥 Check login on page load
   useEffect(() => {
-    // perform fetch within effect body to avoid direct setState warning
-    async function load() {
-      const res = await fetch("/api/products");
-      const data: Product[] = await res.json();
-      setProducts(data);
+    async function checkLogin() {
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+
+      if (!isLoggedIn) {
+        router.push("/register");
+      } else {
+        await fetchProducts();
+      }
+      setIsChecking(false);
     }
-    load();
-  }, []);
+
+    checkLogin();
+  }, [router]);
+
+  if (isChecking) return null;
 
   const showSuccessToast = (message: string) => {
     setToastMessage(message);
@@ -49,18 +61,34 @@ export default function Home() {
     showSuccessToast("Product deleted successfully!");
   };
 
+  // 🔥 Logout Function
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    router.push("/login");
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Toast message={toastMessage} show={showToast} />
 
       <div className="max-w-7xl mx-auto px-6 py-5">
-        <h1 className="text-xl font-semibold text-center text-rose-600 mb-6">
-          Homemade Bakery Store
-        </h1>
 
-        {/* Side-by-side layout */}
+        {/* 🔥 Header with Logout */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-semibold text-rose-600">
+            Cloud Kitchen Product Management
+          </h1>
+
+          <button
+            onClick={handleLogout}
+            className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-1 rounded-lg text-sm"
+          >
+            Logout
+          </button>
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-6">
-          
+
           {/* Form */}
           <div className="lg:col-span-1">
             <ProductForm
